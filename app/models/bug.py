@@ -10,14 +10,14 @@ class Comment(BaseModel):
 
 class Attachment(BaseModel):
     filename: str
-    filepath: str  # Local path or URL
+    filepath: str  
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Bug(Document):
     title: str
     description: str
-    status: str = "open"  # open, in-progress, resolved
-    severity: str = "low"  # low, medium, high
+    status: str = "open" 
+    severity: str = "low"  
     reporter_id: str
     assignee_id: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)

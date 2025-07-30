@@ -1,6 +1,12 @@
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+# app/schemas/bug.py
+
+from pydantic import BaseModel
+
+class CommentCreate(BaseModel):
+    content: str
 
 class CommentSchema(BaseModel):
     commenter_id: str

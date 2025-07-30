@@ -1,13 +1,15 @@
-from pydantic_settings import BaseSettings
 
+# app/config.py
 
-class Settings(BaseSettings):
-    MONGO_URI: str = "mongodb://localhost:27017"
-    DB_NAME: str = "bug_tracker_db"
-    JWT_SECRET_KEY: str = "supersecret"
-    JWT_ALGORITHM: str = "HS256"
-    
-    class Config:
-        env_file = ".env"
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Load environment variables from .env
+
+class Settings:
+    MONGO_URI: str = os.getenv("MONGO_URI")
+    DB_NAME: str = os.getenv("DB_NAME")
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY")
+    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")  # default to HS256
 
 settings = Settings()

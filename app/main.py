@@ -1,9 +1,13 @@
 from fastapi import FastAPI
 from app.database import init_db
-app=FastAPI()
+from app.routes import auth, user, bug
 
+app = FastAPI()
 
 @app.on_event("startup")
-async def start_db():
+async def on_startup():
     await init_db()
 
+app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+app.include_router(user.router, prefix="/api/users", tags=["Users"])
+app.include_router(bug.router, prefix="/api/bugs", tags=["Bugs"])
