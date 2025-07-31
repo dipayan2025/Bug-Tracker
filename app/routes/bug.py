@@ -5,7 +5,7 @@ from datetime import datetime
 
 from app.models.bug import Bug, Comment
 from app.schemas.bug import BugCreate, BugOut, BugUpdate, CommentCreate
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_current_active_user
 from app.models.user import User
 
 router = APIRouter(prefix="/bugs", tags=["Bugs"])
@@ -14,23 +14,34 @@ router = APIRouter(prefix="/bugs", tags=["Bugs"])
 @router.post("/", response_model=BugOut)
 async def create_bug(
     bug: BugCreate,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     new_bug = Bug(
         title=bug.title,
         description=bug.description,
         severity=bug.severity,
-        status="open",  # optional default
+        status="open",
         reporter_id=str(current_user.id),
-        assignee_id=None,
+        assignee_id=bug.assignee_id,
         comments=[],
         attachments=[]
     )
     await new_bug.insert()
-
-    # ✅ Ensure correct response structure
-    payload = new_bug.dict(exclude={"id", "_id"})
-    return BugOut(**payload, id=str(new_bug.id))
+    
+    # Convert to response format
+    return BugOut(
+        id=str(new_bug.id),
+        title=new_bug.title,
+        description=new_bug.description,
+        status=new_bug.status,
+        severity=new_bug.severity,
+        reporter_id=new_bug.reporter_id,
+        assignee_id=new_bug.assignee_id,
+        created_at=new_bug.created_at,
+        updated_at=new_bug.updated_at,
+        comments=[],
+        attachments=[]
+    )
 
 # 📋 List bugs with optional filters
 @router.get("/", response_model=List[BugOut])
@@ -38,6 +49,7 @@ async def list_bugs(
     status: Optional[str] = None,
     severity: Optional[str] = None,
     assignee_id: Optional[str] = None,
+    current_user: User = Depends(get_current_active_user)
 ):
     filters = {}
     if status:
@@ -52,7 +64,10 @@ async def list_bugs(
 
 # 🔍 Get bug details
 @router.get("/{bug_id}", response_model=BugOut)
-async def get_bug(bug_id: str):
+async def get_bug(
+    bug_id: str,
+    current_user: User = Depends(get_current_active_user)
+):
     bug = await Bug.get(bug_id)
     if not bug:
         raise HTTPException(status_code=404, detail="Bug not found")
@@ -63,7 +78,7 @@ async def get_bug(bug_id: str):
 async def update_bug(
     bug_id: str,
     update: BugUpdate,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     bug = await Bug.get(bug_id)
     if not bug:
@@ -83,15 +98,16 @@ async def update_bug(
 async def add_comment(
     bug_id: str,
     comment: CommentCreate,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     bug = await Bug.get(bug_id)
     if not bug:
         raise HTTPException(status_code=404, detail="Bug not found")
 
     new_comment = Comment(
-        author_id=str(current_user.id),
-        content=comment.content,
+        commenter_id=str(current_user.id),
+        text=comment.content,
+        timestamp=datetime.utcnow()
     )
     bug.comments.append(new_comment)
     bug.updated_at = datetime.utcnow()

@@ -8,6 +8,7 @@ class User(Document):
     username: str
     password: str  # Hashed
     role: Literal['reporter', 'developer', 'manager'] = 'reporter'
+    disabled: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
@@ -19,6 +20,7 @@ class User(Document):
                 "email": "user@example.com",
                 "username": "user123",
                 "password": "hashedpassword",
-                "role": "developer"
+                "role": "developer",
+                "disabled": False
             }
         }

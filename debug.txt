@@ -1,0 +1,168 @@
+BUG TRACKER API - DEBUG FIXES LOG
+=====================================
+
+DATE: 2024-01-15
+STATUS: FIXED ✅
+
+CRITICAL ISSUES FIXED:
+======================
+
+1. AUTHENTICATION SYSTEM OVERHAUL
+---------------------------------
+ISSUE: Login not working with FastAPI
+FIXES:
+- Replaced custom JWT implementation with FastAPI OAuth2 pattern
+- Updated auth routes to use OAuth2PasswordRequestForm
+- Fixed JWT token creation with proper expiration handling
+- Added proper error handling for authentication failures
+
+CHANGES MADE:
+- app/routes/auth.py: Complete rewrite using FastAPI pattern
+- app/core/jwt.py: Updated token creation with timezone support
+- app/core/dependencies.py: Fixed OAuth2 bearer token validation
+- app/schemas/user.py: Added Token schema and fixed UserOut
+
+2. DEPENDENCY CONFLICTS RESOLVED
+--------------------------------
+ISSUE: Conflicting JWT libraries causing import errors
+FIXES:
+- Removed PyJWT and fastapi-jwt-auth from requirements.txt
+- Added python-jose[cryptography]==3.3.0
+- Fixed import conflicts in dependencies.py
+
+CHANGES MADE:
+- requirements.txt: Updated JWT dependencies
+- app/core/dependencies.py: Removed duplicate imports
+
+3. BUG INSERTION FIXES
+----------------------
+ISSUE: Bug posting routes not working due to schema mismatches
+FIXES:
+- Fixed BugOut schema missing required fields (created_at, updated_at)
+- Corrected Comment schema field names (commenter_id, text, timestamp)
+- Fixed Attachment schema missing uploaded_at field
+- Updated BugUpdate schema to remove invalid comment field
+
+CHANGES MADE:
+- app/schemas/bug.py: Added missing datetime fields
+- app/routes/bug.py: Fixed comment creation with correct field names
+- app/models/bug.py: Ensured model-schema alignment
+
+4. PYDANTIC V2 COMPATIBILITY
+-----------------------------
+ISSUE: Deprecated orm_mode causing validation errors
+FIXES:
+- Replaced orm_mode = True with from_attributes = True
+- Updated User model to include disabled field
+- Fixed schema validation for all models
+
+CHANGES MADE:
+- app/schemas/user.py: Updated Config class
+- app/models/user.py: Added disabled field
+
+5. ENVIRONMENT CONFIGURATION
+---------------------------
+ISSUE: Missing .env file causing startup failures
+FIXES:
+- Created proper .env file with all required variables
+- Added MongoDB connection settings
+- Configured JWT secret key and algorithm
+
+ENVIRONMENT VARIABLES ADDED:
+- MONGO_URI=mongodb://localhost:27017
+- DB_NAME=bug_tracker
+- JWT_SECRET_KEY=your_super_secret_key_here_change_this_in_production
+- JWT_ALGORITHM=HS256
+
+6. API RESPONSE STRUCTURE FIXES
+-------------------------------
+ISSUE: Inconsistent response models causing validation errors
+FIXES:
+- Fixed BugOut response structure to match model fields
+- Updated comment creation to use correct field names
+- Ensured all datetime fields are properly included
+
+CHANGES MADE:
+- app/routes/bug.py: Fixed response model construction
+- app/schemas/bug.py: Added missing timestamp fields
+
+7. AUTHENTICATION FLOW IMPROVEMENTS
+-----------------------------------
+ISSUE: Inconsistent authentication patterns
+FIXES:
+- Implemented proper OAuth2 password flow
+- Added get_current_active_user dependency
+- Fixed token validation with proper error handling
+- Updated all routes to use proper authentication
+
+CHANGES MADE:
+- app/core/dependencies.py: Added TokenData model and proper validation
+- app/routes/bug.py: Updated all endpoints to use get_current_active_user
+
+8. COMMENT SYSTEM FIXES
+-----------------------
+ISSUE: Comment creation using wrong field names
+FIXES:
+- Fixed comment creation to use commenter_id instead of author_id
+- Updated text field instead of content
+- Added proper timestamp handling
+
+CHANGES MADE:
+- app/routes/bug.py: Fixed new_comment creation
+- app/schemas/bug.py: Updated CommentSchema fields
+
+FILES MODIFIED:
+===============
+1. requirements.txt - Updated dependencies
+2. app/core/dependencies.py - Fixed OAuth2 implementation
+3. app/core/jwt.py - Updated token handling
+4. app/routes/auth.py - Complete rewrite
+5. app/routes/bug.py - Fixed all endpoints
+6. app/schemas/user.py - Added Token schema
+7. app/schemas/bug.py - Fixed all schemas
+8. app/models/user.py - Added disabled field
+9. .env - Created environment file
+10. run.py - Added startup script
+11. README.md - Updated documentation
+
+API ENDPOINTS NOW WORKING:
+==========================
+✅ POST /api/auth/register - User registration
+✅ POST /api/auth/login - User login with JWT
+✅ POST /api/bugs/ - Create bug reports
+✅ GET /api/bugs/ - List bugs with filters
+✅ GET /api/bugs/{id} - Get bug details
+✅ PATCH /api/bugs/{id} - Update bug status
+✅ POST /api/bugs/{id}/comments - Add comments
+
+AUTHENTICATION FLOW:
+===================
+1. Register user → POST /api/auth/register
+2. Login → POST /api/auth/login (form data)
+3. Get JWT token from response
+4. Use token in Authorization header: Bearer <token>
+
+TESTING COMMANDS:
+================
+# Register user
+curl -X POST "http://localhost:8000/api/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "username": "testuser", "password": "password123"}'
+
+# Login
+curl -X POST "http://localhost:8000/api/auth/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=test@example.com&password=password123"
+
+# Create bug (replace YOUR_JWT_TOKEN with actual token)
+curl -X POST "http://localhost:8000/api/bugs/" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Test Bug", "description": "Test description", "severity": "high"}'
+
+RUNNING THE APPLICATION:
+======================
+1. Install dependencies: pip install -r requirements.txt
+2. Start MongoDB
+3. Run: python run.py
+4. Access API docs: http://localhost:8000/docs

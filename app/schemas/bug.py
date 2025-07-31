@@ -1,9 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
-# app/schemas/bug.py
-
-from pydantic import BaseModel
 
 class CommentCreate(BaseModel):
     content: str
@@ -11,10 +8,12 @@ class CommentCreate(BaseModel):
 class CommentSchema(BaseModel):
     commenter_id: str
     text: str
+    timestamp: datetime
 
 class AttachmentSchema(BaseModel):
     filename: str
     filepath: str
+    uploaded_at: datetime
 
 class BugCreate(BaseModel):
     title: str
@@ -24,7 +23,7 @@ class BugCreate(BaseModel):
 
 class BugUpdate(BaseModel):
     status: Optional[str]
-    comment: Optional[CommentSchema]
+    assignee_id: Optional[str]
 
 class BugOut(BaseModel):
     id: str
@@ -34,5 +33,7 @@ class BugOut(BaseModel):
     severity: str
     reporter_id: str
     assignee_id: Optional[str]
+    created_at: datetime
+    updated_at: datetime
     comments: List[CommentSchema]
     attachments: List[AttachmentSchema]

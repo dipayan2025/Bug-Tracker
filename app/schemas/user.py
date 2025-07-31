@@ -1,6 +1,11 @@
 from pydantic import BaseModel, EmailStr
 from typing import Literal
 from typing import Optional
+from datetime import datetime
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
 class UserProfileUpdate(BaseModel):
     username: Optional[str]
@@ -8,6 +13,7 @@ class UserProfileUpdate(BaseModel):
 
 class UpdateRoleRequest(BaseModel):
     role: Literal["reporter", "developer", "manager"]
+
 class UserCreate(BaseModel):
     email: EmailStr
     username: str
@@ -22,5 +28,7 @@ class UserOut(BaseModel):
     email: EmailStr
     username: str
     role: Literal["reporter", "developer", "manager"]
+    created_at: datetime
+    
     class Config:
-        orm_mode = True
+        from_attributes = True
