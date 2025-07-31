@@ -62,7 +62,7 @@ async def list_bugs(
     bugs = await Bug.find(filters).to_list()
     return bugs
 
-# 🔍 Get bug details
+
 @router.get("/{bug_id}", response_model=BugOut)
 async def get_bug(
     bug_id: str,

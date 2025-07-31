@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.schemas.user import UserOut, UserProfileUpdate, UpdateRoleRequest
 from app.models.user import User
-from app.core.dependencies import get_current_user, require_admin
+from app.core.dependencies import get_current_user, require_manager
 from beanie import PydanticObjectId
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -22,7 +22,7 @@ async def update_profile(update: UserProfileUpdate, current_user: User = Depends
     return current_user
 
 # 🔁 Admin: Update any user's role
-@router.patch("/{user_id}/role", dependencies=[Depends(require_admin)])
+@router.patch("/{user_id}/role", dependencies=[Depends(require_manager)])
 async def update_user_role(
     user_id: str,
     payload: UpdateRoleRequest
@@ -36,7 +36,7 @@ async def update_user_role(
     return {"msg": f"Role updated to '{payload.role}'"}
 
 # 🔍 Admin: List all users
-@router.get("/", response_model=list[UserOut], dependencies=[Depends(require_admin)])
+@router.get("/", response_model=list[UserOut], dependencies=[Depends(require_manager)])
 async def list_users():
     users = await User.find_all().to_list()
     return users
