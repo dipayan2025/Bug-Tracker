@@ -10,8 +10,13 @@ class Comment(BaseModel):
 
 class Attachment(BaseModel):
     filename: str
-    filepath: str  
+    content_type: str
+    size: int  # in bytes
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+    uploader_id: str
+    url: str
+    
+  
 #class CommentCreate(BaseModel):
     #text: str
 
