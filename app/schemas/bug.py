@@ -1,9 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
 class CommentCreate(BaseModel):
-    content: str
+    text: str
+
+class CommentOut(BaseModel):
+    commenter_id: str
+    text: str
+    timestamp: datetime
+
 
 class CommentSchema(BaseModel):
     commenter_id: str

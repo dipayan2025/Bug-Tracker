@@ -12,6 +12,17 @@ class Attachment(BaseModel):
     filename: str
     filepath: str  
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+#class CommentCreate(BaseModel):
+    #text: str
+
+
+
+#class CommentOut(BaseModel):  # for response
+   # commenter_id: str
+   # text: str
+    #timestamp: datetime
+
+
 
 class Bug(Document):
     title: str
@@ -22,8 +33,8 @@ class Bug(Document):
     assignee_id: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    comments: List[Comment] = []
-    attachments: List[Attachment] = []
+    comments: List[Comment]
+    attachments: List[Attachment] 
 
     class Settings:
         name = "bugs"

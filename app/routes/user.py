@@ -6,7 +6,6 @@ from beanie import PydanticObjectId
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-# 🔐 Get current user's profile
 @router.get("/me", response_model=UserOut)
 async def get_profile(current_user: User = Depends(get_current_user)):
     return current_user
