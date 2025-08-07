@@ -1,72 +1,92 @@
-import shutil
-from beanie import PydanticObjectId
-from fastapi import Depends, UploadFile, File, HTTPException
-import os
+
+
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi.responses import FileResponse
 from uuid import uuid4
-from datetime import datetime
-from fastapi import APIRouter, HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordRequestForm
-from datetime import timedelta
-from app.models.user import User
-from app.schemas import bug
-from app.schemas.user import UserCreate, UserLogin, UserOut, Token
+import os
+import shutil
+
+from app.config import settings
+from app.models.bug import Bug, Attachment
 from app.core.dependencies import get_current_active_user
-from app.models.bug import Attachment, Bug
-from app.schemas.bug import BugOut
+from app.schemas.bug import AttachmentSchema  
+
 router = APIRouter(prefix="/attachments", tags=["Attachments"])
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-
-@router.post("/{bug_id}/attachments", response_model=BugOut)
-async def upload_file(
+@router.post("/upload/{bug_id}")
+async def upload_attachment(
     bug_id: str,
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_active_user)
+    current_user=Depends(get_current_active_user)
 ):
-    bug = await Bug.get(PydanticObjectId(bug_id))
+    if file.content_type not in settings.ALLOWED_FILE_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid file type")
+
+    contents = await file.read()
+    if len(contents) > settings.MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large")
+    
+    await file.seek(0)
+
+    extension = file.filename.split(".")[-1]
+    unique_name = f"{uuid4()}.{extension}"
+    full_path = os.path.join(settings.UPLOAD_DIR, unique_name)
+
+    with open(full_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    bug = await Bug.get(bug_id)
     if not bug:
         raise HTTPException(status_code=404, detail="Bug not found")
 
-    # Validate size (max 5MB)
-    contents = await file.read()
-    max_size = 5 * 1024 * 1024
-    if len(contents) > max_size:
-        raise HTTPException(status_code=400, detail="File too large")
-
-    # Validate type
-    allowed_types = ["image/png", "image/jpeg", "application/pdf"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Invalid file type")
-
-    # Save to disk
-    filename = f"{uuid4().hex}_{file.filename}"
-    file_path = os.path.join(UPLOAD_DIR, filename)
-    with open(file_path, "wb") as f:
-        f.write(contents)
-
     attachment = Attachment(
         filename=file.filename,
+        filepath=full_path,
         content_type=file.content_type,
-        size=len(contents),
-        uploaded_at=datetime.utcnow(),
-        uploader_id=str(current_user.id),
-        url=f"/api/files/{filename}"
+        size=len(contents)
     )
+
     bug.attachments.append(attachment)
-    bug.updated_at = datetime.utcnow()
     await bug.save()
-    
-    bug_dict = bug.dict()
-    bug_dict["id"] = str(bug.id)
-    return BugOut(**bug_dict)
+
+    return {"message": "Attachment uploaded successfully", "filename": file.filename}
 
 
-from fastapi.responses import FileResponse
+@router.get("/download/{bug_id}/{filename}")
+async def download_attachment(
+    bug_id: str,
+    filename: str,
+    current_user=Depends(get_current_active_user)
+):
+    bug = await Bug.get(bug_id)
+    if not bug:
+        raise HTTPException(status_code=404, detail="Bug not found")
 
-@router.get("/files/{filename}")
-async def download_file(filename: str):
-    file_path = os.path.join(UPLOAD_DIR, filename)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path)
+    attachment = next((a for a in bug.attachments if a.filename == filename), None)
+    if not attachment:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+
+    return FileResponse(
+        path=attachment.filepath,
+        filename=attachment.filename,
+        media_type=attachment.content_type or "application/octet-stream"
+    )
+
+
+
+@router.get("/list/{bug_id}", response_model=list[AttachmentSchema])
+async def list_attachments(
+    bug_id: str,
+    current_user=Depends(get_current_active_user)
+):
+    bug = await Bug.get(bug_id)
+    if not bug:
+        raise HTTPException(status_code=404, detail="Bug not found")
+
+    return [
+        AttachmentSchema(
+            **a.model_dump(),
+            download_url=f"/attachments/download/{str(bug.id)}/{a.filename}"
+        )
+        for a in bug.attachments
+    ]

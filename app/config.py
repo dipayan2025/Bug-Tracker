@@ -1,6 +1,3 @@
-
-# app/config.py
-
 from dotenv import load_dotenv
 import os
 
@@ -12,4 +9,15 @@ class Settings:
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")  # default to HS256
 
+    # File upload settings
+    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
+    MAX_FILE_SIZE: int = int(os.getenv("MAX_FILE_SIZE", 5 * 1024 * 1024))  # default 5MB
+    ALLOWED_FILE_TYPES: set = {
+        "image/png", "image/jpeg", "application/pdf", "text/plain"
+    }
+
+    def ensure_upload_dir(self):
+        os.makedirs(self.UPLOAD_DIR, exist_ok=True)
+
 settings = Settings()
+settings.ensure_upload_dir()

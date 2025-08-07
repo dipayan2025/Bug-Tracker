@@ -108,6 +108,7 @@ async def get_bug(
     attachments=[AttachmentSchema(**a.model_dump()) for a in bug.attachments]
 )
 
+from app.schemas.bug import BugOut, AttachmentSchema  # adjust import if needed
 
 @router.patch("/{bug_id}", response_model=BugOut)
 async def update_bug(
@@ -127,18 +128,20 @@ async def update_bug(
     bug.updated_at = datetime.utcnow()
     await bug.save()
     return BugOut(
-        id=str(bug.id),
-        title=bug.title,
-        description=bug.description,
-        status=bug.status,
-        severity=bug.severity,
-        reporter_id=bug.reporter_id,
-        assignee_id=bug.assignee_id,
-        created_at=bug.created_at,
-        updated_at=bug.updated_at,
-        comments=bug.comments,
-        attachments=bug.attachments,
-    )
+    id=str(bug.id),
+    title=bug.title,
+    description=bug.description,
+    status=bug.status,
+    severity=bug.severity,
+    reporter_id=bug.reporter_id,
+    assignee_id=bug.assignee_id,
+    created_at=bug.created_at,
+    updated_at=bug.updated_at,
+    comments=[CommentSchema(**c.model_dump()) for c in bug.comments],  # ✅ fixed
+    attachments=[AttachmentSchema(**a.model_dump()) for a in bug.attachments],  # ✅ already correct
+)
+
+
 
 from fastapi.responses import JSONResponse
 

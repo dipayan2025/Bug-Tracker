@@ -11,15 +11,15 @@ class CommentOut(BaseModel):
     timestamp: datetime
 
 
+class AttachmentSchema(BaseModel):
+    filename: str
+    filepath: Optional[str] = None
+    uploaded_at: datetime
 class CommentSchema(BaseModel):
     commenter_id: str
     text: str
     timestamp: datetime
 
-class AttachmentSchema(BaseModel):
-    filename: str
-    filepath: str
-    uploaded_at: datetime
 
 class BugCreate(BaseModel):
     title: str

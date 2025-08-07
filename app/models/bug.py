@@ -8,13 +8,19 @@ class Comment(BaseModel):
     text: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-class Attachment(BaseModel):
+'''class Attachment(BaseModel):
     filename: str
     content_type: str
-    size: int  # in bytes
+    size: int 
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
     uploader_id: str
-    url: str
+    url: str'''
+class Attachment(BaseModel):
+    filename: str
+    filepath: Optional[str] = None
+    content_type: Optional[str] = None
+    size: Optional[int] = None
+    uploaded_at: datetime = Field(default_factory=datetime.utcnow)
     
   
 #class CommentCreate(BaseModel):
